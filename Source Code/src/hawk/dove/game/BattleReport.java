@@ -94,7 +94,7 @@ public class BattleReport {
         if(Fileright.createNewFile())
             writer = new PrintWriter(Fileright);
         else
-            return false;
+            throw new IOException();
         writer.write("step , number of hawks, number of doves, hawks percentage, doves percentage\n");
         return true;
     }
@@ -120,7 +120,7 @@ public class BattleReport {
         }
         int hawks_percentage = (int)(num_hawks / (float)(num_hawks + num_doves) * 100);
         int doves_percentage = (int)(num_doves / (float)(num_hawks + num_doves) * 100);
-        writer.write( 
+        BattleReport.writer.write( 
                 Integer.toString(BattleReport.stepCounter++) 
                         + ", " + 
                         Integer.toString(num_hawks)
@@ -132,6 +132,11 @@ public class BattleReport {
                         Integer.toString(doves_percentage)
                         + "\n"
         );
+    }
+    
+    public static boolean closeBattleReportsLogFile_CSV() throws IOException{
+        writer.close();
+        return true;
     }
     
     

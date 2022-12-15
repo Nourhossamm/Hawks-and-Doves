@@ -14,17 +14,29 @@ public class PlayerAgent implements Steppable {
     private float payOff;
     private float prevPayOff;
     private final String name;
-    private Strategy strategy; 
+    private float HawkPropability = 50;
+    private float prev_HawkPropability;
+    private Strategy strategy;
+    private Strategy prev_strategy;
     public Boolean isPlaying;
-    public PlayerAgent(String name) {
+    public float forgetting;
+    public float experimenting;
+    public float HawkPropensity;
+    public float DovePropensity;
+    public PlayerAgent(String name, float forgetting, float experimenting) {
         this.name = name;
         this.payOff = 0;
         this.prevPayOff = 0;
+        this.HawkPropensity = 1;
+        this.DovePropensity = 1;
         this.isPlaying = false;
+        this.forgetting = forgetting;
+        this.experimenting = experimenting;
         if(randomNumberGenerator.nextInt(5000) % 2 == 0)
             this.strategy = Strategy.Hawk;
         else
             this.strategy = Strategy.Dove;
+        this.prev_strategy = this.strategy;
     }
 
     public float getPayOff() {
@@ -39,38 +51,56 @@ public class PlayerAgent implements Steppable {
         return strategy;
     }
 
+    public void setStrategy(Strategy strategy) {
+        this.strategy = strategy;
+    }
+
+    public float getHawkPropability() {
+        return HawkPropability;
+    }
+
+    public void setHawkPropability(float HawkPropability) {
+        this.HawkPropability = HawkPropability;
+    }
+    
+    public float getHawkPropabilityChange() {
+        return HawkPropability - prev_HawkPropability;
+    }
+
     public float getPrevPayOff() {
         return prevPayOff;
     }
     
-    public boolean updatePayOff(Strategy OpponentStrategy,int value, int cost){
+    public float updatePayOff(Strategy OpponentStrategy,int value, int cost){
         this.prevPayOff = this.payOff;
-        boolean isWinning = false;
+        float payoff = 0;
         if(this.strategy == Strategy.Hawk && OpponentStrategy == Strategy.Hawk)
-            this.payOff = this.prevPayOff + value / 2 - cost;
+             payoff = value / 2 - cost;
         else if(this.strategy == Strategy.Hawk && OpponentStrategy == Strategy.Dove)
         {
-            isWinning = true;
-            this.payOff = this.prevPayOff + value;
+            payoff = value;
         }
         else if(this.strategy == Strategy.Dove && OpponentStrategy == Strategy.Dove)
-            this.payOff = this.prevPayOff + value / 2;
+            payoff = value / 2;
         else if(this.strategy == Strategy.Dove && OpponentStrategy == Strategy.Hawk)
-            this.payOff = this.prevPayOff;
-        return isWinning;
+            payoff = 0;
+        this.payOff = payoff;
+        return payoff;
     }
     
-    public boolean changeStrategy(Strategy OpponentStrategy){
-        boolean isNegativeUtility = this.payOff < this.prevPayOff;
-        boolean OpposedStrategy = OpponentStrategy != this.strategy;
-        boolean res = isNegativeUtility || OpposedStrategy;
-        if(res)
+    public boolean changeStrategy(float payoff, LearningMethod method){
+        if(method == LearningMethod.Both || method == LearningMethod.Individual_Roth_Erve)
         {
-            if(this.strategy == Strategy.Hawk)
-                this.strategy = Strategy.Dove;
-            else
-                this.strategy = Strategy.Hawk;
-        }   
+            this.HawkPropensity = this.HawkPropensity * (1 - this.forgetting) + payoff * (1 - this.experimenting) * (this.strategy == Strategy.Hawk? 1 : 0);
+            this.DovePropensity = this.DovePropensity * (1 - this.forgetting) + payoff * (1 - this.experimenting) * (this.strategy == Strategy.Dove? 1 : 0);
+            this.prev_HawkPropability = this.HawkPropability;
+            this.HawkPropability= this.HawkPropensity / (this.HawkPropensity + this.DovePropensity) * 100;
+        }
+        
+        int RandomValue = PlayerAgent.randomNumberGenerator.nextInt(100);
+        boolean res = this.prev_strategy != this.strategy;
+        this.strategy = (RandomValue > (100 - this.HawkPropability))? Strategy.Hawk : Strategy.Dove;
+        this.prev_strategy = this.strategy;
         return res; 
     }
     
@@ -98,16 +128,25 @@ public class PlayerAgent implements Steppable {
             {
                 if(this.requestToEnterBattle(battleRoom) == false)
                     continue;
-                battleRoom.Battle();
+                battleRoom.Battle(game.learningMethod);
                 BattleReport battleReport = new BattleReport(battleRoom);
                 game.BattleReports.add(battleReport);
                 BattleReport.logBattle(battleReport);
-                if(game.BattleReports.size() >= game.sampleRate)
+                if(game.BattleReports.size() > game.battlesPerSimulation)
                 {
                     game.stopPlaying = true;
+                    if(game.learningMethod == LearningMethod.PSO_Social_Learning || game.learningMethod == LearningMethod.Both)
+                        game.PSO_Learn();
                     try {
                     BattleReport.logBattle(game.BattleReports);
                     game.BattleReports = new ArrayList<>();
+                    if(game.simulationsCounter == game.numberOfSimulations)
+                    {
+                        BattleReport.closeBattleReportsLogFile_CSV();
+                        System.exit(0);
+                    }
+                    else
+                        game.simulationsCounter++;
                     game.stopPlaying = false;
                 } catch (IOException ex) {
                     Logger.getLogger(PlayerAgent.class.getName()).log(Level.SEVERE, null, ex);

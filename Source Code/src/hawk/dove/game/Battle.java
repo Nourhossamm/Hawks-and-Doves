@@ -34,16 +34,14 @@ public class Battle {
     
     
     
-    public void Battle()
+    public void Battle(LearningMethod method)
     {
         PlayerAgent p1 = this.Players.pop();
         PlayerAgent p2 = this.Players.pop();
-        p1.updatePayOff(p2.getStrategy(), this.value, this.cost);
-        p2.updatePayOff(p1.getStrategy(), this.value, this.cost);
-        Strategy s1 = p1.getStrategy();
-        Strategy s2 = p2.getStrategy();
-        this.will_p1_change = p1.changeStrategy(s2);
-        this.will_p2_change = p2.changeStrategy(s1);
+        float p1_payoff = p1.updatePayOff(p2.getStrategy(), this.value, this.cost);
+        float p2_payoff = p2.updatePayOff(p1.getStrategy(), this.value, this.cost);
+        this.will_p1_change = p1.changeStrategy(p1_payoff, method);
+        this.will_p2_change = p2.changeStrategy(p2_payoff, method);
         this.Players.push(p1);
         this.Players.push(p2);
     }
