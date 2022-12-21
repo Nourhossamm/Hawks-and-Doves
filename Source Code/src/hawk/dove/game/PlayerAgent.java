@@ -23,6 +23,7 @@ public class PlayerAgent implements Steppable {
     public float experimenting;
     public float HawkPropensity;
     public float DovePropensity;
+    
     public PlayerAgent(String name, float forgetting, float experimenting) {
         this.name = name;
         this.payOff = 0;
@@ -101,7 +102,7 @@ public class PlayerAgent implements Steppable {
         boolean res = this.prev_strategy != this.strategy;
         this.strategy = (RandomValue > (100 - this.HawkPropability))? Strategy.Hawk : Strategy.Dove;
         this.prev_strategy = this.strategy;
-        return res; 
+        return res;
     }
     
     @Override
@@ -115,6 +116,7 @@ public class PlayerAgent implements Steppable {
         battle.Players.push(this);
         return true;
     }
+    
     @Override
     public void step(SimState state) {
         HawkDoveGame game = (HawkDoveGame) state;
@@ -132,21 +134,21 @@ public class PlayerAgent implements Steppable {
                 BattleReport battleReport = new BattleReport(battleRoom);
                 game.BattleReports.add(battleReport);
                 BattleReport.logBattle(battleReport);
-                if(game.BattleReports.size() > game.battlesPerSimulation)
+                if(game.BattleReports.size() >= game.battlesPerStep) // was using > instead of >= which lead to an additional step
                 {
                     game.stopPlaying = true;
                     if(game.learningMethod == LearningMethod.PSO_Social_Learning || game.learningMethod == LearningMethod.Both)
                         game.PSO_Learn();
                     try {
-                    BattleReport.logBattle(game.BattleReports);
+                    BattleReport.logBattle(game.Players);
                     game.BattleReports = new ArrayList<>();
-                    if(game.simulationsCounter == game.numberOfSimulations)
+                    if(game.stepCounter == game.numberOfSteps)
                     {
                         BattleReport.closeBattleReportsLogFile_CSV();
                         System.exit(0);
                     }
                     else
-                        game.simulationsCounter++;
+                        game.stepCounter++;
                     game.stopPlaying = false;
                 } catch (IOException ex) {
                     Logger.getLogger(PlayerAgent.class.getName()).log(Level.SEVERE, null, ex);

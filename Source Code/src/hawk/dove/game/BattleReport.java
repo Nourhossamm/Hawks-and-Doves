@@ -95,41 +95,32 @@ public class BattleReport {
             writer = new PrintWriter(Fileright);
         else
             throw new IOException();
-        writer.write("step , number of hawks, number of doves, hawks percentage, doves percentage\n");
+        writer.write("step , number of hawks, number of doves\n");
         return true;
     }
     
     
-    public static void logBattle(List<BattleReport> reports) throws IOException{
-        int length = reports.size();
+    public static void logBattle(List<PlayerAgent> Players) throws IOException{
+        int length = Players.size();
         
         int num_hawks = 0;
         int num_doves = 0;
         
         for(int i =0; i < length; i++)
         {
-            BattleReport report = reports.get(i);
-            if(report.p1_strategy == Strategy.Hawk)
+            PlayerAgent player = Players.get(i);
+            if(player.getStrategy() == Strategy.Hawk)
                 num_hawks++;
-            else if(report.p1_strategy == Strategy.Dove)
-                num_doves++;
-            if(report.p2_strategy == Strategy.Hawk)
-                num_hawks++;
-            else if(report.p2_strategy == Strategy.Dove)
+            else
                 num_doves++;
         }
-        int hawks_percentage = (int)(num_hawks / (float)(num_hawks + num_doves) * 100);
-        int doves_percentage = (int)(num_doves / (float)(num_hawks + num_doves) * 100);
+
         BattleReport.writer.write( 
                 Integer.toString(BattleReport.stepCounter++) 
                         + ", " + 
                         Integer.toString(num_hawks)
                         + ", " + 
                         Integer.toString(num_doves)
-                        + ", " + 
-                        Integer.toString(hawks_percentage)
-                        + ", " + 
-                        Integer.toString(doves_percentage)
                         + "\n"
         );
     }
@@ -157,10 +148,6 @@ public class BattleReport {
                 report.getP2().getName() + " [ " + report.p2_strategy + " ]"
                 + " => " + 
                 result
-                + " => " +
-                report.getP1().getName() + (report.will_p1_change? " will " : " will not ") + "change strategy."
-                + " : " +
-                report.getP2().getName() + (report.will_p2_change? " will " : " will not ") + "change strategy."
         );
     }
 }

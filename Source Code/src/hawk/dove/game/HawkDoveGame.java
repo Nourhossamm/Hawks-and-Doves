@@ -14,21 +14,20 @@ public class HawkDoveGame extends SimState {
     public List<Battle> BattleRooms = new ArrayList();
     public List<BattleReport> BattleReports = new ArrayList();
     public List<PlayerAgent> Players = new ArrayList();
-    public int minCost;
-    public int maxCost;
-    public int minValue;
-    public int maxValue;
+
     public Normal valueNormalDistributer = new Normal(100, 10, this.random);
     public Uniform costUniformDistributer = new Uniform(10, 60, this.random);
     public Normal costNormalDistributer = new Normal(30, 5, this.random);
     public Uniform ExperimintationUniformDistributer = new Uniform(0.4, 0.6, this.random);
     public Uniform ForgettingUniformDistributer = new Uniform(0.7, 0.9, this.random);
+    
     public CostCase Cost = CostCase.NormalDistribution;
     public ValueCase Value = ValueCase.NormalDistribution;
     public LearningMethod learningMethod = LearningMethod.Both;
-    final public int battlesPerSimulation = 100;
-    final public int numberOfSimulations = 50;
-    public int simulationsCounter = 0;
+    
+    final public int battlesPerStep = 100;
+    final public int numberOfSteps = 50;
+    public int stepCounter = 1;
     final public float socialConformity = (float) 0.01;
     public boolean stopPlaying = false;
     @Override
@@ -45,7 +44,8 @@ public class HawkDoveGame extends SimState {
         {
             float forgetting = (float)this.ForgettingUniformDistributer.nextDouble();
             float experimenting = (float)this.ExperimintationUniformDistributer.nextDouble();
-            PlayerAgent p = new PlayerAgent("Player (" + Integer.toString(i + 1) + ")",
+            PlayerAgent p = new PlayerAgent(
+                    "Player (" + Integer.toString(i + 1) + ")",
                     forgetting,
                     experimenting
                     );
@@ -61,6 +61,8 @@ public class HawkDoveGame extends SimState {
         PriorityQueue PlayersQueue = new PriorityQueue(100, new PlayerComparator());
         PlayerAgent[] PlayersArray = new PlayerAgent[100];
         int numberOfPlayers = this.Players.size();
+        
+        //Arranging players using priority queue
         for(int i = 0; i < numberOfPlayers; i++)
         {
             PlayerAgent p = this.Players.get(i);
